@@ -55,7 +55,7 @@ findNonOverlap (c:cs)
 
 main :: IO ()
 main = do
-  file <- B.readFile "day3_input"
+  file <- B.readFile "inputs/day3_input"
   case parseOnly parseClaims file of
     Left _ -> putStrLn "Could not parse"
     Right claims -> do

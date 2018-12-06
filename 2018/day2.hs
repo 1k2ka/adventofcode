@@ -40,7 +40,7 @@ findSimilar (x:xs) =
 
 main :: IO ()
 main = do
-  file <- words <$> (readFile "day2_input")
+  file <- words <$> (readFile "inputs/day2_input")
   let (d, t) = foldr1 sumTup $ map dupsAndTrips file
   putStrLn $ "Part 1: " ++ (show $ d * t)
   putStrLn $ "Part 2: " ++ (show $ findSimilar file)

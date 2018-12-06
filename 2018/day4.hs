@@ -91,7 +91,7 @@ cmpMin (m, c, gid) (m', c', gid') = compare c c'
 
 main :: IO ()
 main = do
-  file <- B.readFile "day4_input"
+  file <- B.readFile "inputs/day4_input"
   case parseOnly parseRecords file of
     Left _ -> putStrLn "Failed to parse"
     Right recs -> do

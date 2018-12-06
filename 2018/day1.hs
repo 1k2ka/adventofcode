@@ -30,7 +30,7 @@ findFirstDup seen (x:xs) =
 
 main :: IO ()
 main = do
-  file <- B.readFile "day1_input"
+  file <- B.readFile "inputs/day1_input"
   case parseOnly parseFreqs file of
     Left err -> putStrLn "Could not parse file"
     Right vals -> do
