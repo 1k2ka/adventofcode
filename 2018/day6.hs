@@ -43,12 +43,12 @@ diqualified (maxX, maxY) map' =
   let borderCoords = [(x, y)| x <- [0..maxX], y <- [0, maxY]] ++ [(x, y)| y <- [1..(maxY-1)], x <- [0, maxX]]
   in nub $ foldr (\coord acc -> (map' H.! coord):acc) [] borderCoords
 
-rankMap :: Map -> [Maybe Int] -> Int
-rankMap map' disqs =
+largestRegion :: Map -> [Maybe Int] -> Int
+largestRegion map' disqs =
   let
     countList :: [(Maybe Int, Int)]
     countList = H.toList $ foldr (\v acc -> H.insertWith (+) v 1 acc) H.empty map'
-  in snd $ head $ reverse $ sortOn snd $ filter (not . ((flip elem) disqs) . fst) countList
+  in snd . head . reverse . (sortOn snd) $ filter (not . ((flip elem) disqs) . fst) countList
 
 withinRegion :: [Coord] -> Coord -> Int
 withinRegion coords coord
@@ -69,6 +69,5 @@ main = do
       let bounds = maxXY coords
           map' = createMap bounds coords
           disqs = diqualified bounds map'
-          largestSize = rankMap map' disqs
-      putStrLn $ "Part 1: " ++ (show largestSize)
+      putStrLn $ "Part 1: " ++ (show $ largestRegion map' disqs)
       putStrLn $ "Part 2: " ++ (show $ findCloseRegion bounds coords)
