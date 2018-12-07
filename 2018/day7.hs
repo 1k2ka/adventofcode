@@ -96,7 +96,7 @@ multiPlan workers graph time =
         | otherwise ->
             let occupiedWorkers = map fst $ init $ foldr (\w x@((_, tasks):_) -> (mapWorkerToTasks tasks time w):x) [(Worker [], todoTasks)] availableWorkers
                 nextTime = findNextTime occupiedWorkers
-            in trace (show nextTime) $ multiPlan occupiedWorkers graph nextTime
+            in trace(show occupiedWorkers ++ "\n" ++ (show workers)) $ multiPlan occupiedWorkers graph nextTime
 
 main :: IO ()
 main = do
