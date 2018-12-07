@@ -9,7 +9,6 @@ import Data.HashMap.Lazy (HashMap)
 import qualified Data.HashMap.Lazy as H
 import Data.List
 import Data.Char
-import Debug.Trace
 
 data Dep = Dep {
   _idDep :: Char,
@@ -22,6 +21,7 @@ data Step = Step {
 } deriving (Eq, Show)
 
 data Worker = Worker {
+  _wId :: Int,
   _work :: [(Char, Int)]
 } deriving (Eq, Show)
 
@@ -29,6 +29,12 @@ type Graph = HashMap Char [Char]
 
 instance Ord Step where
   compare (Step sid _) (Step sid' _) = compare sid sid'
+
+instance Ord Worker where
+  compare (Worker _ []) (Worker _ _) = LT
+  compare (Worker _ _) (Worker _ []) = GT
+  compare (Worker _ work) (Worker _ work') =
+    cmpWork (maximumBy cmpWork work) (maximumBy cmpWork work')
 
 parseStep :: Parser Dep
 parseStep = do
@@ -69,34 +75,42 @@ stepsToGraph [] = H.empty
 stepsToGraph (s:ss) = H.singleton (_id s) (_deps s) `H.union` (stepsToGraph ss)
 
 getTime :: Char -> Int -> Int
-getTime '_' i = i
-getTime c i = i + (ord c - 4)
+getTime c i = ord(c) - 4 + i
 
-mapWorkerToTasks :: [Char] -> Int -> Worker -> (Worker, [Char])
-mapWorkerToTasks [] _ w = (w, [])
-mapWorkerToTasks (c:cs) time (Worker work) = (Worker ((c, time):work), cs)
+cmpWork :: (Char, Int) -> (Char, Int) -> Ordering
+cmpWork (c, t) (c', t') = compare (getTime c t) (getTime c' t')
 
-findNextTime :: [Worker] -> Int
-findNextTime workers =
-  minimum $ map ((uncurry getTime) . safeMaxBy . _work) workers
-  where
-    safeMaxBy :: [(Char, Int)] -> (Char, Int)
-    safeMaxBy [] = ('_', 0)
-    safeMaxBy work = maximumBy cmpWork work
-    cmpWork (c, t) (c', t') = compare (getTime c t) (getTime c t)
+mergeWorkers :: [Worker] -> [Worker] -> [Worker]
+mergeWorkers [] w = w
+mergeWorkers (w:ws) workers =
+  let wids = map _wId workers
+  in if | elem (_wId w) wids -> mergeWorkers ws (w:(filter ((/=_wId w) . _wId) workers))
+        | otherwise -> mergeWorkers ws (w:ws)
 
--- multiPlan :: [Worker] -> Graph -> Int -> [Worker]
+occupyWorkers :: [Worker] -> [Char] -> Int -> [Worker]
+occupyWorkers workers [] _ = workers
+occupyWorkers [] _ _ = []
+occupyWorkers (w:ws) (c:cs) t =
+  (Worker (_wId w) ((c, t):(_work w))):(occupyWorkers ws cs t)
+
+completedTasks :: Int -> Worker -> [Char]
+completedTasks t w = map fst $ filter ((<=t) . (uncurry getTime)) $ _work w
+
+multiPlan :: [Worker] -> Graph -> Int -> [Worker]
 multiPlan workers graph time =
-  let availableWorkers = filter (and . (map ((< time) . (uncurry getTime))) . _work) workers
-      completedTasks = concat $ map ((map fst) . _work) availableWorkers
-      availableTasks = H.foldrWithKey (\k v acc -> if (and $ map ((flip elem) completedTasks) v) then k:acc else acc) [] graph
-      todoTasks = availableTasks \\ completedTasks
-  in if | length completedTasks == H.size graph -> workers
-        | length todoTasks == 0 || length availableWorkers == 0 -> multiPlan workers graph (findNextTime workers)
+  let availableWorkers = sortBy (\w w' -> compare (_wId w) (_wId w')) $ filter (and . (map ((<= time) . (uncurry getTime))) . _work) workers
+      completedTasks' = nub $ concat $ map (completedTasks time) workers
+      runningTasks = concat $ map ((map fst) . _work) workers
+      availableTasks = H.foldrWithKey (\k v acc -> if (and $ map ((flip elem) completedTasks') v) then k:acc else acc) [] graph
+      todoTasks = sort $ (availableTasks \\ completedTasks') \\ runningTasks
+  in if | length completedTasks' == H.size graph -> workers
         | otherwise ->
-            let occupiedWorkers = map fst $ init $ foldr (\w x@((_, tasks):_) -> (mapWorkerToTasks tasks time w):x) [(Worker [], todoTasks)] availableWorkers
-                nextTime = findNextTime occupiedWorkers
-            in trace(show occupiedWorkers ++ "\n" ++ (show workers)) $ multiPlan occupiedWorkers graph nextTime
+            let occupiedWorkers = occupyWorkers availableWorkers todoTasks time
+                newWorkers = mergeWorkers occupiedWorkers workers
+            in multiPlan newWorkers graph (time + 1)
+
+findLatest :: [Worker] -> Int
+findLatest = (uncurry getTime) . (maximumBy cmpWork) . _work . maximum
 
 main :: IO ()
 main = do
@@ -107,6 +121,6 @@ main = do
       let steps = sort $ depsToSteps deps
           plan' = plan steps
           graph = stepsToGraph steps
-          workers = [Worker [], Worker [], Worker [], Worker [], Worker []]
+          workers = [(Worker x []) | x <- [1..5]]
       putStrLn $ "Part 1: " ++ (show plan')
-      putStrLn $ show (multiPlan workers graph 0)
+      putStrLn $ "Part 2: " ++ (show $ findLatest $ multiPlan workers graph 0)
