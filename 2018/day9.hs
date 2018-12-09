@@ -1,9 +1,10 @@
 {-# LANGUAGE MultiWayIf #-}
+{-# LANGUAGE Strict #-}
 
 module Main where
 
 import qualified Data.Sequence as S
-import qualified Data.IntMap.Lazy as I
+import qualified Data.IntMap.Strict as I
 
 data GameState = GameState {
   circle :: S.Seq Int,
