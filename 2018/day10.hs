@@ -12,10 +12,9 @@ showPoints :: [(Int, Int)] -> String
 showPoints points =
   let minY = snd $ minimumBy (\x y -> snd x `compare` snd y) points
       minX = fst $ minimumBy (\x y -> fst x `compare` fst y) points
-      points' = map (\(x,y) -> (x-minX, y-minY)) points
-      maxY = snd $ maximumBy (\x y -> snd x `compare` snd y) points'
-      maxX = fst $ maximumBy (\x y -> fst x `compare` fst y) points'
-  in concat $ map (\y -> (map (\x -> if elem (x,y) points' then '#' else '.') [0..maxX]) ++ "\n") [0..maxY]
+      maxY = snd $ maximumBy (\x y -> snd x `compare` snd y) points
+      maxX = fst $ maximumBy (\x y -> fst x `compare` fst y) points
+  in concat $ map (\y -> (map (\x -> if elem (x,y) points then '#' else '.') [minX..maxX]) ++ "\n") [minY..maxY]
 
 parsePoint :: Parser Point
 parsePoint = do
