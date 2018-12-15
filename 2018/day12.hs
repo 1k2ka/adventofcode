@@ -1,12 +1,11 @@
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE MultiWayIf #-}
 
 module Main where
 
-import Control.Applicative
-import Data.Attoparsec.ByteString.Char8 hiding (take)
-import qualified Data.ByteString as B
-import qualified Data.HashMap.Lazy as H
+import           Control.Applicative
+import           Data.Attoparsec.ByteString.Char8 hiding (take)
+import qualified Data.ByteString                  as B
+import qualified Data.HashMap.Lazy                as H
 
 type Rules = H.HashMap String Char
 
@@ -35,9 +34,9 @@ parseInput = do
   return (state, H.fromList rules)
 
 applyRule :: Rules -> String -> Char
-applyRule rules s = 
+applyRule rules s =
   case H.lookup s rules of
-    Just c -> c
+    Just c  -> c
     Nothing -> error "Incorrect input"
 
 applyRules :: Rules -> String -> String
@@ -49,15 +48,11 @@ applyRules rules st@(s:s':ss) = s:s':(go rules st)
           in (applyRule rules seg):(go rules (tail state))
       | otherwise = ".."
 
-generation :: Rules -> String -> String
-generation r s =
-    applyRules r ("..." ++ s ++ "...")
-
 goGen :: Rules -> String -> Int -> String
 goGen rules state i
   | i == 0 = state
   | otherwise =
-      let nextGen = generation rules state
+      let nextGen = applyRules rules ("..." ++ state ++ "...")
       in goGen rules nextGen (i-1)
 
 genScore :: Rules -> String -> Int -> Int
