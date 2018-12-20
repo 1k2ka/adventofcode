@@ -97,10 +97,18 @@ tick' i cm cs = if i <= 0 then cs else tick' (i-1) cm (tick cm cs)
 hasCollisions :: [((Double, Double), Cart)] -> Bool
 hasCollisions cs = any (not . trd . snd) cs
 
+removeCollisions :: [((Double, Double), Cart)] -> [((Double, Double), Cart)]
+removeCollisions = filter (trd . snd)
+
 part1 :: CartMap -> [((Double, Double), Cart)] -> [((Double, Double), Cart)]
 part1 cm cs =
   let ns = sortBy cmpCart $ tick cm cs
   in if hasCollisions ns then filter (not . trd . snd) ns else part1 cm ns
+
+part2 :: CartMap -> [((Double, Double), Cart)] -> [((Double, Double), Cart)]
+part2 cm cs =
+  let ns = sortBy cmpCart $ removeCollisions $ tick cm cs
+  in if length ns == 1 then ns else part2 cm ns
 
 cmpCart :: ((Double, Double), Cart) -> ((Double, Double), Cart) -> Ordering
 cmpCart (yx, _) (yx', _) = yx `compare` yx'
@@ -116,4 +124,6 @@ main = do
                                           _   -> (yx, c)) m'
       cs = sortBy cmpCart $ getCarts m'
       (y, x) = (fst . head) $ part1 cm cs
+      (y', x') = (fst . head) $ part2 cm cs
   putStrLn $ "Part 1: " ++ (show x) ++ "," ++ (show y)
+  putStrLn $ "Part 2: " ++ (show x') ++ "," ++ (show y')
