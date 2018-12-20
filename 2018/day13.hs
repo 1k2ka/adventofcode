@@ -54,7 +54,8 @@ moveCarts :: CartMap -> [((Double, Double), Cart)] -> [((Double, Double), Cart)]
 moveCarts _ [] = []
 moveCarts cm (c@((y,x), (dir, nt, st)):cs) =
   if st then
-    let infront = headMay $ filter (\((y',x'), _) -> (x :+ y) + dir == (x' :+ y')) cs
+    let ndir = if cm H.! (y,x) == '+' then dir * nt else dir
+        infront = headMay $ filter (\((y',x'), _) -> (x :+ y) + ndir == (x' :+ y')) cs
     in case infront of
       Just i@(yx, _) -> moveCarts cm (((yx, (r, r, False))):(delete i cs))
       Nothing ->
@@ -116,4 +117,5 @@ main = do
                                           '^' -> (yx, '|')
                                           _   -> (yx, c)) m'
       cs = sortBy cmpCart $ getCarts m'
-  putStrLn $ show $ part1 cm cs
+      (y, x) = (fst . head) $ part1 cm cs
+  putStrLn $ "Part 1: " ++ (show x) ++ "," ++ (show y)
