@@ -10,6 +10,7 @@ import Data.List (delete, find, sortBy)
 type CartMap = H.HashMap (Double, Double) Char
 type Cart = (Complex Double, Complex Double, Bool)
 
+trd :: (a, b, c) -> c
 trd (_, _, c) = c
 
 parseMap :: [String] -> [((Double, Double), Char)]
@@ -24,19 +25,16 @@ parseMap x = filter ((/=' ') . snd) $ go x 0
       in r ++ (go ss (y+1))
 
 cartFilter :: Char -> Bool
-cartFilter c = case c of
-  '^' -> True
-  'v' -> True
-  '<' -> True
-  '>' -> True
-  _   -> False
+cartFilter c = elem c "^v<>"
 
 r :: Complex Double
 r = 1 :+ 0
 
+-- i represents clockwise turn and down
 cw :: Complex Double
 cw = 0 :+ 1
 
+-- -i represents counter-clockwise turn and up
 ccw :: Complex Double
 ccw = 0 :+ (-1)
 
