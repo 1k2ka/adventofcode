@@ -8,6 +8,7 @@ import Data.Complex
 import Data.List (delete, find, sortBy)
 
 type CartMap = H.HashMap (Double, Double) Char
+type CartStates = [((Double, Double), Cart)]
 type Cart = (Complex Double, Complex Double, Bool)
 
 trd :: (a, b, c) -> c
@@ -38,7 +39,7 @@ cw = 0 :+ 1
 ccw :: Complex Double
 ccw = 0 :+ (-1)
 
-getCarts :: [((Double, Double), Char)] -> [((Double, Double), Cart)]
+getCarts :: [((Double, Double), Char)] -> CartStates
 getCarts xs =
   let carts = filter (cartFilter . snd) xs
       m' = map (\(yx, c) -> case c of
@@ -48,7 +49,7 @@ getCarts xs =
                                 '<' -> (yx, (-r, ccw, True))) carts
   in m'
 
-moveCarts :: CartMap -> [((Double, Double), Cart)] -> [((Double, Double), Cart)]
+moveCarts :: CartMap -> CartStates -> CartStates
 moveCarts _ [] = []
 moveCarts cm (c@((y,x), (dir, nt, st)):cs) =
   if st then
@@ -81,31 +82,31 @@ moveCarts cm (c@((y,x), (dir, nt, st)):cs) =
                   in ((y', x'), (dir, nt, True)):(moveCarts cm cs)
   else c:(moveCarts cm cs)
 
-checkCollisions :: [((Double, Double), Cart)] -> [((Double, Double), Cart)]
+checkCollisions :: CartStates -> CartStates
 checkCollisions [] = []
 checkCollisions (c@(yx, _):cs) =
   case find ((==yx) . fst) cs of
     Just c' -> checkCollisions ((yx, (r, r, False)):(delete c' cs))
     Nothing -> c:(checkCollisions cs)
 
-tick :: CartMap -> [((Double, Double), Cart)] -> [((Double, Double), Cart)]
+tick :: CartMap -> CartStates -> CartStates
 tick cm = checkCollisions . (moveCarts cm)
 
-tick' :: Int -> CartMap -> [((Double, Double), Cart)] -> [((Double, Double), Cart)]
+tick' :: Int -> CartMap -> CartStates -> CartStates
 tick' i cm cs = if i <= 0 then cs else tick' (i-1) cm (tick cm cs)
 
-hasCollisions :: [((Double, Double), Cart)] -> Bool
+hasCollisions :: CartStates -> Bool
 hasCollisions cs = any (not . trd . snd) cs
 
-removeCollisions :: [((Double, Double), Cart)] -> [((Double, Double), Cart)]
+removeCollisions :: CartStates -> CartStates
 removeCollisions = filter (trd . snd)
 
-part1 :: CartMap -> [((Double, Double), Cart)] -> [((Double, Double), Cart)]
+part1 :: CartMap -> CartStates -> CartStates
 part1 cm cs =
   let ns = sortBy cmpCart $ tick cm cs
   in if hasCollisions ns then filter (not . trd . snd) ns else part1 cm ns
 
-part2 :: CartMap -> [((Double, Double), Cart)] -> [((Double, Double), Cart)]
+part2 :: CartMap -> CartStates -> CartStates
 part2 cm cs =
   let ns = sortBy cmpCart $ removeCollisions $ tick cm cs
   in if length ns == 1 then ns else part2 cm ns
