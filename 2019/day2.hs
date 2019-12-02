@@ -1,12 +1,12 @@
 module Main where
 
-import Debug.Trace
-
 split :: Char -> String -> [String]
 split c str =
   let (s, rest) = break (==c) str
-  in case rest of
-    (',':ss) -> s : split c ss
+  in case (s, rest) of
+    ("", (',':ss)) -> split c ss
+    (s, (',':ss)) -> s : split c ss
+    ("", []) -> []
     _ -> [s]
 
 getInput :: IO [Int]
