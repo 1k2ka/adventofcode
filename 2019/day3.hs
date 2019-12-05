@@ -1,9 +1,8 @@
 module Main where
 
-import Data.List
 import Data.List.Split
-import Data.Set (Set)
-import qualified Data.Set as S
+import Data.HashMap (Map)
+import qualified Data.HashMap as HM
 
 getInput :: IO ([String], [String])
 getInput = do
@@ -11,26 +10,38 @@ getInput = do
   let ls = lines file
   return (splitOn "," (head ls), splitOn "," (ls !! 1))
 
-constructMap :: (Int, Int) -> [String] -> Set (Int, Int)
-constructMap _ [] = S.empty
-constructMap (cx, cy) (p:ps) =
-  case p of
-    ('U':a) -> S.fromList [(cx, y) | y <- [cy+1..cy+read a]] `S.union` constructMap (cx, cy + read a) ps
-    ('D':a) -> S.fromList [(cx, y) | y <- [cy-read a..cy-1]] `S.union` constructMap (cx, cy - read a) ps
-    ('L':a) -> S.fromList [(x, cy) | x <- [cx-read a..cx-1]] `S.union` constructMap (cx - read a, cy) ps
-    ('R':a) -> S.fromList [(x, cy) | x <- [cx+1..cx+read a]] `S.union` constructMap (cx + read a, cy) ps
+constructMap :: Int -> (Int, Int) -> [String] -> Map (Int, Int) Int
+constructMap _ _ [] = HM.empty
+constructMap tot (x, y) ((d:a):ps) =
+  HM.fromList (map (go d) walk) `HM.union` constructMap (tot + amount) next ps
+  where
+      amount = read a
+      walk = [1..amount]
+      next = (fst . go d) amount
 
-manhattan :: (Int, Int) -> (Int, Int) -> Int
-manhattan (x1, y1) (x2, y2) = abs (x1 - x2) + abs (y1 - y2)
+      go :: Char -> Int -> ((Int, Int), Int)
+      go 'U' i = ((x, y + i), tot + i)
+      go 'D' i = ((x, y - i), tot + i)
+      go 'L' i = ((x - i, y), tot + i)
+      go 'R' i = ((x + i, y), tot + i)
 
-cmp :: (Int, Int) -> (Int, Int) -> Ordering
-cmp p1 p2 = manhattan (0,0) p1 `compare` manhattan (0,0) p2
+part1 :: Map (Int, Int) Int -> Map (Int, Int) Int -> Int
+part1 m1 m2 = minimum (map (manhattan (0,0) . fst) $ HM.toList intersection)
+  where
+    intersection = m1 `HM.intersection` m2
+
+    manhattan :: (Int, Int) -> (Int, Int) -> Int
+    manhattan (x1, y1) (x2, y2) = abs (x1 - x2) + abs (y1 - y2)
+
+part2 :: Map (Int, Int) Int -> Map (Int, Int) Int -> Int
+part2 m1 m2 = minimum (map snd $ HM.toList intersection)
+  where
+    intersection = HM.intersectionWith (+) m1 m2
 
 main = do
   (ps1, ps2) <- getInput
-  let m1 = constructMap (0,0) ps1
-      m2 = constructMap (0,0) ps2
-      i = m1 `S.intersection` m2
-      closest = minimumBy cmp (S.toList i)
-  print $ "Part 1: " ++ show (manhattan (0,0) closest)
+  let m1 = constructMap 0 (0, 0) ps1
+      m2 = constructMap 0 (0, 0) ps2
+  print $ "Part 1: " ++ show (part1 m1 m2)
+  print $ "Part 2: " ++ show (part2 m1 m2)
 
