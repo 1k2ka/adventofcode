@@ -1,16 +1,9 @@
 module Main where
 
-split :: Char -> String -> [String]
-split c str =
-  let (s, rest) = break (==c) str
-  in case (s, rest) of
-    ("", (',':ss)) -> split c ss
-    (s, (',':ss)) -> s : split c ss
-    ("", []) -> []
-    _ -> [s]
+import Data.List.Split
 
 getInput :: IO [Int]
-getInput = (fmap . fmap) read $ split ',' <$> readFile "inputs/day2"
+getInput = (fmap . fmap) read $ splitOn "," <$> readFile "inputs/day2"
 
 exec :: Int -> [Int] -> [Int]
 exec pointer positions =
@@ -21,20 +14,20 @@ exec pointer positions =
     where x = positions !! (positions !! (pointer + 1))
           y = positions !! (positions !! (pointer + 2))
           save = positions !! (pointer + 3)
-          (left, (_:right)) = splitAt save positions
+          (left, _:right) = splitAt save positions
 
 setMem :: Int -> Int -> [Int] -> [Int]
-setMem noun verb (zero:_:_:pos) = (zero:noun:verb:pos)
+setMem noun verb (zero:_:_:pos) = zero:noun:verb:pos
 
 gridSearch :: [Int] -> (Int, Int)
 gridSearch positions = head $ dropWhile ((/=19690720) . result) grid
   where grid = [(x, y) | x <- [0..99], y <- [0..99]]
         result :: (Int, Int) -> Int
-        result (noun, verb) = exec 0 (setMem noun verb positions) !! 0
+        result (noun, verb) = head $ exec 0 (setMem noun verb positions)
 
 main = do
   input <- getInput
-  print $ "Part 1: " ++ (show $ exec 0 (setMem 12 2 input) !! 0)
+  print $ "Part 1: " ++ (show . head $ exec 0 (setMem 12 2 input))
   let (noun, verb) = gridSearch input
-  print $ "Part 2: " ++ (show $ 100 * noun + verb)
+  print $ "Part 2: " ++ show (100 * noun + verb)
 
